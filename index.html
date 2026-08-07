@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#8b2c2c" />
+<meta name="description" content="Un dossier d'enquête à résoudre — huis clos rejouable, le coupable change à chaque partie." />
+<title>Minuit au Manoir Verlaine — Enquête</title>
+<style>
+  :root{
+    --paper:#f3ede0; --paper-2:#eae2d0; --line:#d9cfb8;
+    --ink:#2b2620; --muted:#6b6252; --muted-2:#8a8270;
+    --accent:#8b2c2c; --accent-soft:#f0dcd7;
+    --navy:#28344a; --navy-soft:#e3e6ee;
+    --ok:#2f6b4f; --ok-soft:#dff0e6;
+    --shadow: 0 1px 2px rgba(40,30,10,.08), 0 6px 18px rgba(40,30,10,.10);
+    --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --mono:ui-monospace,"SF Mono","Courier New",monospace;
+    --radius:4px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#1b1712; --paper-2:#221d17; --line:#3a3226;
+      --ink:#e8e0cf; --muted:#a89d86; --muted-2:#7d745f;
+      --accent:#e2685f; --accent-soft:#3a201d;
+      --navy:#9fb0d6; --navy-soft:#1f2740;
+      --ok:#7bcba3; --ok-soft:#173225;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#1b1712; --paper-2:#221d17; --line:#3a3226;
+    --ink:#e8e0cf; --muted:#a89d86; --muted-2:#7d745f;
+    --accent:#e2685f; --accent-soft:#3a201d;
+    --navy:#9fb0d6; --navy-soft:#1f2740;
+    --ok:#7bcba3; --ok-soft:#173225;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.5);
+  }
+  :root[data-theme="light"]{
+    --paper:#f3ede0; --paper-2:#eae2d0; --line:#d9cfb8;
+    --ink:#2b2620; --muted:#6b6252; --muted-2:#8a8270;
+    --accent:#8b2c2c; --accent-soft:#f0dcd7;
+    --navy:#28344a; --navy-soft:#e3e6ee;
+    --ok:#2f6b4f; --ok-soft:#dff0e6;
+    --shadow: 0 1px 2px rgba(40,30,10,.08), 0 6px 18px rgba(40,30,10,.10);
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper); color:var(--ink); min-height:100vh;
+    font-family:var(--serif); line-height:1.55;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  .shell{ max-width:760px; margin:0 auto; padding:28px 20px 60px; }
+  h1,h2,h3{ margin:0 0 .5em; font-weight:700; }
+  p{ margin:0 0 .8em; }
+  .eyebrow{
+    font-family:var(--mono); font-size:.7rem; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:8px; display:block;
+  }
+  .muted{ color:var(--muted); }
+  .btn{
+    font-family:var(--mono); font-size:.85rem; font-weight:700; letter-spacing:.02em;
+    padding:12px 20px; border-radius:var(--radius); border:1.5px solid var(--ink); background:transparent;
+    color:var(--ink); cursor:pointer; display:inline-flex; align-items:center; gap:8px;
+    text-transform:uppercase; min-height:44px;
+  }
+  .btn:hover{ background:var(--ink); color:var(--paper); }
+  .btn-accent{ border-color:var(--accent); color:var(--accent); }
+  .btn-accent:hover{ background:var(--accent); color:#fff; }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn:disabled:hover{ background:transparent; color:var(--ink); }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .row-between{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+
+  .ecran{ display:none; }
+  .ecran.actif{ display:block; animation:fadein .2s ease; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  /* --- fiche / carte type dossier --- */
+  .fiche{
+    background:var(--paper-2); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 20px; margin-bottom:14px; box-shadow:var(--shadow); position:relative;
+  }
+  .fiche-titre{ font-weight:700; font-size:1.02rem; margin-bottom:6px; }
+  .badge{
+    font-family:var(--mono); font-size:.65rem; letter-spacing:.05em; text-transform:uppercase;
+    padding:3px 8px; border-radius:999px; display:inline-block;
+  }
+  .badge-mobile{ background:var(--navy-soft); color:var(--navy); }
+  .badge-moyen{ background:var(--accent-soft); color:var(--accent); }
+  .badge-opportunite{ background:var(--ok-soft); color:var(--ok); }
+  .badge-visite{ background:var(--ok-soft); color:var(--ok); }
+  .badge-interroge{ background:var(--navy-soft); color:var(--navy); }
+
+  .piece{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px; margin-bottom:10px; position:relative;
+    clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+  }
+  .piece .tampon{
+    float:right; margin:0 0 8px 10px; font-family:var(--mono); font-size:.62rem;
+    color:var(--accent); border:1px solid var(--accent); padding:2px 6px; border-radius:3px;
+    transform:rotate(-4deg); letter-spacing:.05em; opacity:.85; white-space:nowrap;
+  }
+  .piece-verrou{
+    background:var(--paper-2); border:1px dashed var(--line); border-radius:var(--radius);
+    padding:16px 18px; margin-bottom:10px; color:var(--muted-2); font-family:var(--mono); font-size:.82rem;
+  }
+  .piece-action{ margin-top:10px; }
+
+  .liste-nav{ display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+  .item-nav{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    background:var(--paper-2); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 16px; cursor:pointer; text-align:left; font-family:var(--serif); font-size:1rem; color:var(--ink);
+    min-height:48px;
+  }
+  .item-nav:hover{ border-color:var(--accent); }
+  .item-nav .titre{ font-weight:700; }
+  .item-nav .sub{ font-size:.82rem; color:var(--muted); }
+
+  .section-title{ font-family:var(--mono); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:22px 0 10px; }
+
+  .checkbox-piece{ display:flex; align-items:flex-start; gap:10px; }
+  .checkbox-piece input{ width:20px; height:20px; margin-top:2px; flex:none; }
+
+  .score-total{ text-align:center; padding:20px 0; }
+  .score-total .qualificatif{ font-family:var(--mono); font-size:1.5rem; font-weight:800; color:var(--accent); letter-spacing:.03em; margin-bottom:6px; }
+  .score-total .valeur{ font-size:.95rem; color:var(--muted); }
+
+  footer.credits{ margin-top:40px; padding-top:16px; border-top:1px solid var(--line); font-size:.75rem; color:var(--muted-2); font-family:var(--mono); }
+
+  @media (max-width:520px){
+    .shell{ padding:20px 14px 48px; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ============ MENU ============ -->
+  <section class="ecran actif" data-ecran="menu">
+    <span class="eyebrow">Dossier confidentiel</span>
+    <h1>Minuit au Manoir Verlaine</h1>
+    <p class="muted">Un huis clos rejouable — le coupable change à chaque nouvelle enquête. À vous de reconstituer, preuve après preuve, ce qui s'est vraiment passé.</p>
+    <div class="row" style="margin-top:20px;">
+      <button class="btn btn-accent" id="btn-nouvelle">Nouvelle enquête</button>
+      <button class="btn" id="btn-reprendre" style="display:none;">Reprendre l'enquête en cours</button>
+    </div>
+    <footer class="credits">Dossier n°1 — Minuit au Manoir Verlaine · enquete.vibecoderau.top</footer>
+  </section>
+
+  <!-- ============ BRIEFING ============ -->
+  <section class="ecran" data-ecran="briefing">
+    <span class="eyebrow">Rapport initial</span>
+    <h2 id="briefing-titre"></h2>
+    <p id="briefing-accroche"></p>
+    <div class="fiche">
+      <div class="fiche-titre">Éléments établis</div>
+      <p><b>Victime :</b> <span id="briefing-victime"></span></p>
+      <p><b>Arme présumée :</b> <span id="briefing-arme"></span></p>
+      <p><b>Heure du décès :</b> <span id="briefing-heure"></span></p>
+    </div>
+    <button class="btn btn-accent" id="btn-commencer">Commencer l'enquête →</button>
+  </section>
+
+  <!-- ============ HUB ============ -->
+  <section class="ecran" data-ecran="hub">
+    <span class="eyebrow">Enquête en cours</span>
+    <h2 id="hub-titre"></h2>
+    <div class="section-title">Lieux à explorer</div>
+    <div class="liste-nav" id="hub-lieux"></div>
+    <div class="section-title">Personnes à interroger</div>
+    <div class="liste-nav" id="hub-suspects"></div>
+    <div class="row">
+      <button class="btn" id="btn-carnet">📓 Carnet d'enquête</button>
+      <button class="btn btn-accent" id="btn-accuser">Faire une accusation</button>
+    </div>
+  </section>
+
+  <!-- ============ LIEU ============ -->
+  <section class="ecran" data-ecran="lieu">
+    <button class="btn" id="btn-lieu-retour" style="margin-bottom:16px;">← Retour</button>
+    <span class="eyebrow">Exploration</span>
+    <h2 id="lieu-nom"></h2>
+    <p class="muted" id="lieu-description"></p>
+    <div id="lieu-indices"></div>
+  </section>
+
+  <!-- ============ SUSPECT ============ -->
+  <section class="ecran" data-ecran="suspect">
+    <button class="btn" id="btn-suspect-retour" style="margin-bottom:16px;">← Retour</button>
+    <span class="eyebrow">Interrogatoire</span>
+    <h2 id="suspect-nom"></h2>
+    <p class="muted" id="suspect-profil"></p>
+    <p class="muted" id="suspect-alibi"></p>
+    <div id="suspect-questions"></div>
+  </section>
+
+  <!-- ============ CARNET ============ -->
+  <section class="ecran" data-ecran="carnet">
+    <button class="btn" id="btn-carnet-retour" style="margin-bottom:16px;">← Retour</button>
+    <span class="eyebrow">Carnet d'enquête</span>
+    <h2>Indices rassemblés</h2>
+    <div id="carnet-liste"></div>
+  </section>
+
+  <!-- ============ ACCUSATION ============ -->
+  <section class="ecran" data-ecran="accusation">
+    <button class="btn" id="btn-accusation-retour" style="margin-bottom:16px;">← Retour</button>
+    <span class="eyebrow">Décision finale</span>
+    <h2>Qui accusez-vous ?</h2>
+    <p class="muted">Choisissez un suspect, puis sélectionnez les indices qui, selon vous, l'incriminent. Une accusation étayée sur les trois plans — mobile, moyen, opportunité — sera jugée plus solide.</p>
+    <div id="accusation-suspects" class="liste-nav"></div>
+    <div id="accusation-dossier" style="display:none;">
+      <div class="section-title">Constituez le dossier à charge</div>
+      <div id="accusation-indices"></div>
+      <button class="btn btn-accent" id="btn-valider-accusation" style="margin-top:14px;">Rendre mon accusation</button>
+    </div>
+  </section>
+
+  <!-- ============ RESOLUTION ============ -->
+  <section class="ecran" data-ecran="resolution">
+    <span class="eyebrow">Verdict</span>
+    <div class="score-total">
+      <div class="qualificatif" id="resolution-qualificatif"></div>
+      <div class="valeur" id="resolution-score"></div>
+    </div>
+    <div class="fiche">
+      <div class="fiche-titre" id="resolution-verite-titre"></div>
+      <p id="resolution-verite-texte"></p>
+    </div>
+    <div class="fiche">
+      <p id="resolution-detail-indices"></p>
+      <p id="resolution-detail-categories"></p>
+    </div>
+    <button class="btn btn-accent" id="btn-rejouer">Rejouer — nouvelle enquête</button>
+  </section>
+
+</div>
+
+<script type="module">
+import {
+  genererPartie, creerEtatInitial, estDebloque,
+  indicesDuLieu, indicesTrouvesDetails, questionsDebloqueesPour,
+  visiterLieu, trouverIndice, ouvrirInterrogatoire, poserQuestion, confronter, clefConfrontation,
+  ajouterAuDossier, retirerDuDossier, allerA, evaluerDossier, faireAccusation,
+  sauvegarder, chargerSave, effacerSave,
+} from "./engine.js";
+import { SCENARIOS } from "./scenarios/index.js";
+
+let scenario = null;
+let etat = null;
+
+const CAT_LABEL = { mobile: "Mobile", moyen: "Moyen", opportunite: "Opportunité" };
+const CAT_BADGE = { mobile: "badge-mobile", moyen: "badge-moyen", opportunite: "badge-opportunite" };
+
+function q(sel){ return document.querySelector(sel); }
+function el(tag, cls, html){ const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; }
+
+// ---------------------------------------------------------------------------
+// Démarrage : reprise d'une sauvegarde, ou attente d'une nouvelle partie.
+// ---------------------------------------------------------------------------
+async function init(){
+  const save = chargerSave();
+  if (save) {
+    const def = SCENARIOS.find((s) => s.id === save.scenarioId);
+    if (def) {
+      scenario = await def.charger();
+      etat = save;
+      q("#btn-reprendre").style.display = "inline-flex";
+    }
+  }
+  q("#btn-nouvelle").addEventListener("click", nouvellePartie);
+  q("#btn-reprendre").addEventListener("click", () => { montrerEcran(etat.ecran); });
+  q("#btn-commencer").addEventListener("click", () => { allerA(etat, "hub"); render(); });
+  q("#btn-carnet").addEventListener("click", () => { allerA(etat, "carnet"); render(); });
+  q("#btn-carnet-retour").addEventListener("click", () => { allerA(etat, "hub"); render(); });
+  q("#btn-accuser").addEventListener("click", () => { allerA(etat, "accusation"); render(); });
+  q("#btn-accusation-retour").addEventListener("click", () => { allerA(etat, "hub"); render(); });
+  q("#btn-lieu-retour").addEventListener("click", () => { allerA(etat, "hub"); render(); });
+  q("#btn-suspect-retour").addEventListener("click", () => { allerA(etat, "hub"); render(); });
+  q("#btn-rejouer").addEventListener("click", nouvellePartie);
+}
+
+async function nouvellePartie(){
+  effacerSave();
+  const def = SCENARIOS[0]; // un seul scénario pour l'instant, sélection à ajouter si plusieurs
+  scenario = await def.charger();
+  const partie = genererPartie(scenario);
+  etat = creerEtatInitial(partie);
+  sauvegarder(etat);
+  render();
+}
+
+function montrerEcran(nom){
+  document.querySelectorAll(".ecran").forEach((e) => e.classList.toggle("actif", e.dataset.ecran === nom));
+  window.scrollTo({ top: 0 });
+}
+
+// ---------------------------------------------------------------------------
+// Rendu — une fonction par écran, appelée depuis render() selon etat.ecran.
+// ---------------------------------------------------------------------------
+function render(){
+  if (!etat) { montrerEcran("menu"); return; }
+  montrerEcran(etat.ecran);
+  if (etat.ecran === "briefing") renderBriefing();
+  else if (etat.ecran === "hub") renderHub();
+  else if (etat.ecran === "lieu") renderLieu();
+  else if (etat.ecran === "suspect") renderSuspect();
+  else if (etat.ecran === "carnet") renderCarnet();
+  else if (etat.ecran === "accusation") renderAccusation();
+  else if (etat.ecran === "resolution") renderResolution();
+}
+
+function renderBriefing(){
+  q("#briefing-titre").textContent = scenario.titre;
+  q("#briefing-accroche").textContent = scenario.accroche;
+  q("#briefing-victime").textContent = scenario.faitsFixes.victime;
+  q("#briefing-arme").textContent = scenario.faitsFixes.arme;
+  q("#briefing-heure").textContent = scenario.faitsFixes.heureMort;
+}
+
+function renderHub(){
+  q("#hub-titre").textContent = scenario.titre;
+
+  const lieuxEl = q("#hub-lieux"); lieuxEl.innerHTML = "";
+  scenario.lieux.forEach((lieu) => {
+    const visite = etat.lieuxVisites.includes(lieu.id);
+    const nb = indicesDuLieu(etat, lieu.id).filter((i) => etat.indicesTrouves.includes(i.id)).length;
+    const total = indicesDuLieu(etat, lieu.id).length;
+    const btn = el("button", "item-nav", `
+      <span><span class="titre">${lieu.nom}</span><br><span class="sub">${nb}/${total} indice(s) trouvé(s)</span></span>
+      ${visite ? '<span class="badge badge-visite">Visité</span>' : ''}
+    `);
+    btn.addEventListener("click", () => { visiterLieu(etat, lieu.id); render(); });
+    lieuxEl.appendChild(btn);
+  });
+
+  const suspectsEl = q("#hub-suspects"); suspectsEl.innerHTML = "";
+  scenario.suspects.forEach((sus) => {
+    const interroge = etat.suspectsInterroges.includes(sus.id);
+    const btn = el("button", "item-nav", `
+      <span><span class="titre">${sus.nom}</span><br><span class="sub">${sus.profil}</span></span>
+      ${interroge ? '<span class="badge badge-interroge">Interrogé</span>' : ''}
+    `);
+    btn.addEventListener("click", () => { ouvrirInterrogatoire(etat, sus.id); render(); });
+    suspectsEl.appendChild(btn);
+  });
+}
+
+function renderLieu(){
+  const lieu = scenario.lieux.find((l) => l.id === etat.ecranLieu);
+  q("#lieu-nom").textContent = lieu.nom;
+  q("#lieu-description").textContent = lieu.description;
+
+  const cont = q("#lieu-indices"); cont.innerHTML = "";
+  indicesDuLieu(etat, lieu.id).forEach((ind) => {
+    const trouve = etat.indicesTrouves.includes(ind.id);
+    if (trouve) {
+      cont.appendChild(fichePreuve(ind));
+    } else if (estDebloque(ind.requiert, etat)) {
+      const carte = el("div", "piece-verrou", `Un détail attire l'attention ici — reste à l'examiner de plus près.`);
+      const btn = el("button", "btn piece-action", "Examiner");
+      btn.addEventListener("click", () => { trouverIndice(etat, ind.id); render(); });
+      carte.appendChild(btn);
+      cont.appendChild(carte);
+    } else {
+      cont.appendChild(el("div", "piece-verrou", "??? — un détail ici ne prendra sens qu'avec d'autres informations en main."));
+    }
+  });
+}
+
+function fichePreuve(ind){
+  const numero = etat.indicesTrouves.indexOf(ind.id) + 1;
+  const cat = ind.categorie ? `<span class="badge ${CAT_BADGE[ind.categorie]}">${CAT_LABEL[ind.categorie]}</span>` : "";
+  const div = el("div", "piece", `
+    <div class="tampon">PIÈCE Nº${numero}</div>
+    <p style="margin-bottom:8px;">${ind.texte}</p>
+    ${cat}
+  `);
+  return div;
+}
+
+function renderSuspect(){
+  const sus = scenario.suspects.find((s) => s.id === etat.ecranSuspect);
+  q("#suspect-nom").textContent = sus.nom;
+  q("#suspect-profil").textContent = sus.profil;
+  q("#suspect-alibi").textContent = sus.alibiDeclare;
+
+  const cont = q("#suspect-questions"); cont.innerHTML = "";
+  const questions = questionsDebloqueesPour(scenario, sus.id, etat);
+  questions.forEach((question) => {
+    const clef = `${sus.id}:${question.id}`;
+    const dejaPosee = etat.questionsPosees.includes(clef);
+    const bloc = el("div", "fiche");
+    const btnQ = el("button", "btn", question.label);
+    btnQ.addEventListener("click", () => {
+      poserQuestion(scenario, etat, sus.id, question.id);
+      render();
+    });
+    bloc.appendChild(btnQ);
+
+    if (dejaPosee) {
+      bloc.appendChild(el("p", "muted", question.reponse));
+      const clefConf = clefConfrontation(sus.id, question.id);
+      const dejaConfrontee = etat.confrontationsReussies.includes(clefConf);
+      if (dejaConfrontee) {
+        bloc.appendChild(el("p", "", `<b>${question.reactionConfrontation}</b>`));
+      } else if (question.contredicteurPar && etat.indicesTrouves.includes(question.contredicteurPar)) {
+        const btnConfront = el("button", "btn btn-accent", "Confronter avec cette preuve");
+        btnConfront.addEventListener("click", () => {
+          confronter(scenario, etat, sus.id, question.id, question.contredicteurPar);
+          render();
+        });
+        bloc.appendChild(btnConfront);
+      }
+    }
+    cont.appendChild(bloc);
+  });
+  if (questions.length === 0) {
+    cont.appendChild(el("p", "muted", "Rien d'autre à demander pour l'instant — d'autres indices ouvriront peut-être de nouvelles questions."));
+  }
+}
+
+function renderCarnet(){
+  const cont = q("#carnet-liste"); cont.innerHTML = "";
+  const details = indicesTrouvesDetails(etat);
+  if (details.length === 0) {
+    cont.appendChild(el("p", "muted", "Aucun indice trouvé pour l'instant. Explorez les lieux du manoir."));
+    return;
+  }
+  details.forEach((ind) => cont.appendChild(fichePreuve(ind)));
+}
+
+function renderAccusation(){
+  const susEl = q("#accusation-suspects"); susEl.innerHTML = "";
+  const dossierWrap = q("#accusation-dossier");
+  dossierWrap.style.display = "none";
+
+  scenario.suspects.forEach((sus) => {
+    const btn = el("button", "item-nav", `<span class="titre">${sus.nom}</span>`);
+    btn.addEventListener("click", () => afficherDossierPour(sus));
+    susEl.appendChild(btn);
+  });
+
+  function afficherDossierPour(sus){
+    dossierWrap.style.display = "block";
+    const cont = q("#accusation-indices"); cont.innerHTML = "";
+    const pertinents = indicesTrouvesDetails(etat).filter((ind) => ind.cibleId === sus.id && ind.categorie);
+    if (pertinents.length === 0) {
+      cont.appendChild(el("p", "muted", "Aucune preuve trouvée jusqu'ici ne désigne cette personne — l'accusation reposerait sur l'intuition seule."));
+    }
+    pertinents.forEach((ind) => {
+      const checked = etat.dossierPreuves.includes(ind.id) ? "checked" : "";
+      const label = el("label", "checkbox-piece fiche");
+      label.innerHTML = `<input type="checkbox" ${checked} /> <span>${ind.texte} <span class="badge ${CAT_BADGE[ind.categorie]}">${CAT_LABEL[ind.categorie]}</span></span>`;
+      label.querySelector("input").addEventListener("change", (e) => {
+        if (e.target.checked) ajouterAuDossier(etat, ind.id); else retirerDuDossier(etat, ind.id);
+      });
+      cont.appendChild(label);
+    });
+
+    q("#btn-valider-accusation").onclick = () => {
+      // Ne garder dans le dossier final que les preuves pertinentes pour ce suspect
+      etat.dossierPreuves = etat.dossierPreuves.filter((id) => pertinents.some((p) => p.id === id));
+      faireAccusation(scenario, etat, sus.id);
+      render();
+    };
+  }
+}
+
+function renderResolution(){
+  const acc = etat.accusation;
+  const coupable = scenario.suspects.find((s) => s.id === etat.coupableId);
+  q("#resolution-qualificatif").textContent = acc.qualificatif;
+  q("#resolution-score").textContent = `Score : ${acc.score}/100`;
+  q("#resolution-verite-titre").textContent = acc.correcte
+    ? `Vous aviez raison : c'est ${coupable.nom}.`
+    : `En réalité, le ou la coupable était ${coupable.nom}.`;
+  q("#resolution-verite-texte").textContent = coupable.profil;
+  q("#resolution-detail-indices").textContent = `Indices rassemblés : ${etat.indicesTrouves.length}/${etat.indicesResolus.length} (${Math.round(acc.pctIndicesTrouves*100)} %).`;
+  q("#resolution-detail-categories").textContent = acc.categoriesCouvertes.length
+    ? `Dossier à l'appui de l'accusation : ${acc.categoriesCouvertes.map((c) => CAT_LABEL[c]).join(", ")}${acc.dossierSolide ? " — dossier solide sur les trois plans." : "."}`
+    : "Aucune preuve n'a été jointe à l'accusation.";
+}
+
+init();
+</script>
+</body>
+</html>
