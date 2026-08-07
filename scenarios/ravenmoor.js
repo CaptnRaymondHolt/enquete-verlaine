@@ -75,9 +75,19 @@ export const scenario = {
     { id: "micro-gresillant", lieu: "bureau-directeur", pointeVers: null, categorie: null,
       texte: "Les enregistrements audio de la soirée sont parasités d'un grésillement inexpliqué, exactement à l'heure du drame." },
     { id: "registre-patients", lieu: "chambre-isolement", pointeVers: null, categorie: null,
-      texte: "Un vieux registre de patients, aux pages écornées, traîne encore sur un bureau poussiéreux." },
+      requiert: { indices: ["odeur-etrange"] },
+      texte: "Un vieux registre de patients, aux pages écornées, était enfermé dans un tiroir métallique — il liste les occupants de chaque chambre, décennie après décennie.",
+      puzzle: {
+        enonce: "Le tiroir métallique est bloqué par un verrou à combinaison à deux chiffres, gravé d'un numéro de chambre à moitié effacé.",
+        solution: "12",
+        aides: [
+          "Un numéro à deux chiffres a été mentionné ailleurs dans le bâtiment, associé à une odeur qui ne s'explique pas.",
+          "Relisez l'indice sur l'odeur inexplicable au sous-sol : un numéro de chambre précis y est cité.",
+          "Le code est 12 — le numéro de la chambre d'où semblait provenir l'odeur.",
+        ],
+      } },
     { id: "odeur-etrange", lieu: "sous-sol-morgue", pointeVers: null, categorie: null,
-      texte: "Plusieurs membres de l'équipe rapportent avoir senti une odeur inexplicable dans les couloirs, juste avant l'alerte." },
+      texte: "Plusieurs membres de l'équipe rapportent avoir senti une odeur inexplicable dans les couloirs, juste avant l'alerte — un survivant du personnel évoque un vieux souvenir : la chambre nº 12, jamais vraiment aérée depuis des décennies." },
 
     // Mobiles fixes
     { id: "preuves-truquees", lieu: "bureau-directeur", pointeVers: "suspect:sceptique", categorie: "mobile",
@@ -112,6 +122,14 @@ export const scenario = {
       texte: "Le matériel personnel de {{nomCible}} ne présente aucune trace suspecte." },
     { id: "temoin-morgue", lieu: "sous-sol-morgue", pointeVers: "innocent", categorie: "opportunite",
       texte: "Un autre membre de l'équipe atteste avoir croisé {{nomCible}} au sous-sol, loin de la salle d'opération." },
+
+    // Indice révélé par combinaison de deux pièces déjà trouvées
+    { id: "registre-lien-famille", lieu: null, pointeVers: null, categorie: null,
+      texte: "En recoupant le vieux registre de patients avec le dossier médical familial de Nora, un nom apparaît à la chambre nº 12 : une aïeule des Ashby y a été internée pendant des années, jamais revue par les siens." },
+  ],
+
+  combinaisons: [
+    { a: "registre-patients", b: "secret-famille", resultat: "registre-lien-famille" },
   ],
 
   interrogatoires: {

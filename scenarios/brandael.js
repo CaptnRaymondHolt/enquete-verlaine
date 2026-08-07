@@ -72,11 +72,21 @@ export const scenario = {
     { id: "rumeurs-cour", lieu: "chapelle", pointeVers: null, categorie: null,
       texte: "Des rumeurs de trahison circulent à la cour depuis plusieurs semaines, sans qu'on sache d'où elles viennent." },
     { id: "messager-etrange", lieu: "cave-tonneaux", pointeVers: null, categorie: null,
-      texte: "Un messager inconnu aurait livré un pli au château la veille, sans qu'on sache pour qui il était destiné." },
+      requiert: { indices: ["cloche-arretee"] },
+      texte: "Un messager inconnu aurait livré un pli au château la veille, sans qu'on sache pour qui il était destiné. Le pli lui-même est resté scellé dans un petit coffret de voyage, retrouvé parmi les tonneaux.",
+      puzzle: {
+        enonce: "Le coffret du messager est verrouillé par un anneau gravé de chiffres romains, qu'il faut aligner sur le bon nombre.",
+        solution: "VII",
+        aides: [
+          "Un détail déjà noté ailleurs, dans la grande salle, mentionne un compte précis.",
+          "La cloche du dernier toast s'est arrêtée sur un coup bien particulier : relisez cet indice-là.",
+          "Le code est VII — le coup sur lequel la cloche s'est tue.",
+        ],
+      } },
     { id: "sceau-brise", lieu: "chambre-baron", pointeVers: null, categorie: null,
       texte: "Le sceau du coffre personnel du baron a été retrouvé brisé, sans qu'on sache ce qui en a été retiré." },
     { id: "cloche-arretee", lieu: "grande-salle", pointeVers: null, categorie: null,
-      texte: "La cloche annonçant le dernier toast s'est tue avant l'heure prévue, un fait que nul ne sait expliquer." },
+      texte: "La cloche annonçant le dernier toast s'est tue avant l'heure prévue, restée bloquée sur son septième coup — un fait que nul ne sait expliquer." },
 
     // Mobiles fixes
     { id: "registre-comptable", lieu: "officine", pointeVers: "suspect:seneschal", categorie: "mobile",
@@ -111,6 +121,14 @@ export const scenario = {
       texte: "Rien dans les affaires de {{nomCible}} ne trahit un contact quelconque avec un poison." },
     { id: "temoin-cave", lieu: "cave-tonneaux", pointeVers: "innocent", categorie: "opportunite",
       texte: "Le sommelier atteste avoir croisé {{nomCible}} à la cave, occupé·e à choisir les vins, loin de la grande salle." },
+
+    // --- Indice révélé par combinaison de deux pièces déjà trouvées ---
+    { id: "lettre-decachetee", lieu: null, pointeVers: null, categorie: null,
+      texte: "Une fois décacheté, le pli du messager révèle une missive anonyme évoquant les rumeurs de trahison qui courent la cour — signée d'une simple initiale, impossible à identifier avec certitude." },
+  ],
+
+  combinaisons: [
+    { a: "messager-etrange", b: "rumeurs-cour", resultat: "lettre-decachetee" },
   ],
 
   interrogatoires: {

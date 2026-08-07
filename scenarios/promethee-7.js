@@ -114,9 +114,27 @@ export const scenario = {
     { id: "connexion-continue", lieu: "sas", pointeVers: "innocent", categorie: "opportunite",
       texte: "Le journal réseau confirme que {{nomCible}} est resté·e connecté·e au poste de surveillance du sas sans interruption toute la nuit." },
 
-    // --- Indice d'ambiance / progression ---
+    // --- Indice verrouillé derrière un puzzle à code (façon Unlock!) ---
     { id: "signal-etrange", lieu: "sas", pointeVers: null, categorie: null,
-      texte: "Un fragment de journal technique mentionne un signal indéterminé, capté juste avant l'incident, sans qu'aucun lien n'ait pu être établi avec les faits." },
+      requiert: { indices: ["journal-systeme"] },
+      texte: "Un fragment de journal technique mentionne un signal indéterminé, capté juste avant l'incident, sans qu'aucun lien n'ait pu être établi avec les faits.",
+      puzzle: {
+        enonce: "Un terminal de diagnostic, verrouillé par un code d'horodatage à 4 chiffres, bloque l'accès aux journaux capteurs de cette zone.",
+        solution: "0219",
+        aides: [
+          "Un détail déjà noté ailleurs, dans un journal du poste de commandement, mentionne un horodatage précis.",
+          "Le journal de bord automatique du poste de commandement s'est interrompu à un instant précis — relisez cet indice-là.",
+          "Le code est 0219 — l'heure exacte où le journal de bord s'est interrompu.",
+        ],
+      } },
+
+    // --- Indice révélé par combinaison de deux pièces déjà trouvées ---
+    { id: "correlation-signal-tension", lieu: null, pointeVers: null, categorie: null,
+      texte: "En recoupant les messages internes tendus des derniers jours avec l'horodatage du signal indéterminé, un même motif ressort : la tension à bord a grimpé exactement au moment où ce signal a été capté — sans qu'on sache encore pourquoi." },
+  ],
+
+  combinaisons: [
+    { a: "ambiance-tension", b: "signal-etrange", resultat: "correlation-signal-tension" },
   ],
 
   interrogatoires: {

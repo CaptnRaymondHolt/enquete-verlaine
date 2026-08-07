@@ -68,15 +68,31 @@ export const scenario = {
     { id: "dague-disparue", lieu: "sanctum", pointeVers: null, categorie: null,
       texte: "La dague enchantée exposée dans le sanctum a disparu de son socle rituel." },
     { id: "runes-eteintes", lieu: "sanctum", pointeVers: null, categorie: null,
-      texte: "Les runes de garde du sanctum, habituellement actives en permanence, se sont éteintes à l'heure exacte du drame." },
+      texte: "Les runes de garde du sanctum, habituellement actives en permanence, se sont éteintes au treizième battement du gong rituel — une heure que la guilde note toujours avec soin : 13:13." },
     { id: "decouverte-annoncee", lieu: "arene-tournoi", pointeVers: null, categorie: null,
       texte: "L'archimage venait d'annoncer, devant toute la guilde, la découverte d'un artefact d'une puissance inégalée." },
     { id: "rumeurs-succession", lieu: "bibliotheque-archives", pointeVers: null, categorie: null,
       texte: "Des rumeurs de succession contestée circulent dans la guilde depuis des semaines." },
-    { id: "sceau-brise-caveau", lieu: "caveau-artefacts", pointeVers: null, categorie: null,
-      texte: "Un sceau protecteur du caveau a été retrouvé brisé, sans qu'on sache ce qui en a été retiré." },
     { id: "murmure-etrange", lieu: "atelier-alchimie", pointeVers: null, categorie: null,
       texte: "Un apprenti rapporte avoir entendu un murmure étrange près du sanctum, juste avant l'alerte générale." },
+
+    // --- Indice verrouillé derrière un puzzle à code (façon Unlock!) ---
+    { id: "sceau-brise-caveau", lieu: "caveau-artefacts", pointeVers: null, categorie: null,
+      requiert: { indices: ["runes-eteintes"] },
+      texte: "Un sceau protecteur du caveau a été retrouvé brisé, sans qu'on sache ce qui en a été retiré.",
+      puzzle: {
+        enonce: "Le sceau porte quatre runes numérotées, tournées pour former un code à composer avant qu'il ne se reforme.",
+        solution: "1313",
+        aides: [
+          "Un détail déjà noté ailleurs évoque une heure précise, à quatre chiffres, liée aux runes.",
+          "Relisez l'indice sur les runes de garde du sanctum — l'heure du treizième battement y est notée.",
+          "Le code est 1313 — l'heure exacte du treizième battement où les runes se sont éteintes.",
+        ],
+      } },
+
+    // --- Indice révélé par combinaison de deux pièces déjà trouvées ---
+    { id: "verite-caveau", lieu: null, pointeVers: null, categorie: null,
+      texte: "En recoupant l'annonce de l'archimage avec l'état du sceau brisé, la vérité apparaît : ce n'est pas l'artefact lui-même qui a été dérobé, mais l'unique document attestant de son authenticité." },
 
     // Mobiles fixes
     { id: "decret-declassement", lieu: "bibliotheque-archives", pointeVers: "suspect:rivale-mage", categorie: "mobile",
@@ -111,6 +127,10 @@ export const scenario = {
       texte: "Aucune trace de mana suspecte ne marque les mains ni les affaires de {{nomCible}}." },
     { id: "temoin-caveau", lieu: "caveau-artefacts", pointeVers: "innocent", categorie: "opportunite",
       texte: "Le gardien du caveau confirme avoir croisé {{nomCible}} loin du sanctum, occupé·e à inventorier les artefacts." },
+  ],
+
+  combinaisons: [
+    { a: "decouverte-annoncee", b: "sceau-brise-caveau", resultat: "verite-caveau" },
   ],
 
   interrogatoires: {

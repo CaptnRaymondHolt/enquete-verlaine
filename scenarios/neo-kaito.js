@@ -76,7 +76,17 @@ export const scenario = {
     { id: "tensions-conseil", lieu: "bar-panoramique", pointeVers: null, categorie: null,
       texte: "Plusieurs invités évoquent, à mots couverts, des tensions vives au sein du conseil d'administration ces dernières semaines." },
     { id: "signal-anonyme", lieu: "parking-souterrain", pointeVers: null, categorie: null,
-      texte: "Le système de sécurité a intercepté un message anonyme, la veille : « On ne peut plus le laisser faire. » Aucune signature identifiable." },
+      requiert: { indices: ["coupure-courant"] },
+      texte: "Le système de sécurité a intercepté un message anonyme, la veille : « On ne peut plus le laisser faire. » Aucune signature identifiable.",
+      puzzle: {
+        enonce: "Un terminal de sécurité verrouillé affiche : « AUTHENTIFICATION REQUISE — HORODATAGE DE L'INCIDENT, FORMAT HHMM ».",
+        solution: "2350",
+        aides: [
+          "Un incident technique daté est déjà consigné ailleurs dans le bâtiment.",
+          "Le journal de la coupure de courant du bureau de direction indique une heure de début précise : relisez cet indice-là.",
+          "Le code est 2350 — l'heure de début de la coupure de courant dans le bureau de direction.",
+        ],
+      } },
 
     // Mobiles fixes
     { id: "piratage-prototype", lieu: "labo-rd", pointeVers: "suspect:hackeuse", categorie: "mobile",
@@ -111,6 +121,14 @@ export const scenario = {
       texte: "Aucune signature d'outil ou de piratage ne correspond au profil de {{nomCible}} dans les journaux de sécurité de la salle des serveurs." },
     { id: "vehicule-enregistre", lieu: "parking-souterrain", pointeVers: "innocent", categorie: "opportunite",
       texte: "Le véhicule de {{nomCible}} est resté immobile et enregistré au même emplacement toute la soirée, selon le journal du parking." },
+
+    // Indice révélé par combinaison de deux pièces déjà trouvées
+    { id: "correlation-signal-effacement", lieu: null, pointeVers: null, categorie: null,
+      texte: "En recoupant l'horodatage du signal anonyme avec celui de l'effacement de l'enregistrement vidéo, la même fenêtre technique ressort : qui a lancé l'avertissement avait aussi accès aux outils d'effacement des caméras — reste à savoir qui." },
+  ],
+
+  combinaisons: [
+    { a: "enregistrement-corrompu", b: "signal-anonyme", resultat: "correlation-signal-effacement" },
   ],
 
   interrogatoires: {

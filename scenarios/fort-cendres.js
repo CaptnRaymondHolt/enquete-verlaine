@@ -70,13 +70,29 @@ export const scenario = {
     { id: "lampe-eteinte", lieu: "salle-conseil", pointeVers: null, categorie: null,
       texte: "La lampe à manivelle de la salle du conseil est retrouvée froide, signe qu'elle n'a pas servi depuis un moment avant la découverte du corps." },
     { id: "annonce-serre", lieu: "serre", pointeVers: null, categorie: null,
-      texte: "Un tableau griffonné à la craie rappelle l'annonce de la Doyenne : une serre fonctionnelle, capable de nourrir l'enclave pour des mois." },
+      texte: "Un tableau griffonné à la craie rappelle l'annonce de la Doyenne : une serre fonctionnelle, capable de nourrir l'enclave pendant environ 214 jours d'après les premiers calculs griffonnés en marge." },
     { id: "rumeurs-succession", lieu: "reserve-eau", pointeVers: null, categorie: null,
       texte: "Des rumeurs sur qui prendra la tête de l'enclave circulent déjà, à peine l'annonce faite." },
     { id: "messager-exterieur", lieu: "serre", pointeVers: null, categorie: null,
       texte: "Un survivant rapporte avoir vu un messager inconnu, venu de l'extérieur, rôder près de l'enclave la veille." },
+
+    // --- Indice verrouillé derrière un puzzle à code (façon Unlock!) ---
     { id: "registre-dechire", lieu: "salle-conseil", pointeVers: null, categorie: null,
-      texte: "Plusieurs pages du registre du conseil ont été arrachées récemment, sans qu'on sache lesquelles." },
+      requiert: { indices: ["annonce-serre"] },
+      texte: "Plusieurs pages du registre du conseil ont été arrachées récemment, sans qu'on sache lesquelles.",
+      puzzle: {
+        enonce: "Le registre est enfermé dans un petit coffre de récupération, verrouillé par une combinaison à 3 chiffres gravée à la pointe du couteau sur le loquet.",
+        solution: "214",
+        aides: [
+          "Un chiffre déjà noté ailleurs, lié à la découverte qui a tout déclenché, pourrait servir de combinaison.",
+          "Relisez ce qui a été calculé à la craie dans la serre — le nombre de jours de survie qu'elle promet.",
+          "Le code est 214 — le nombre de jours annoncé à la serre.",
+        ],
+      } },
+
+    // --- Indice révélé par combinaison de deux pièces déjà trouvées ---
+    { id: "dette-anterieure-fondation", lieu: null, pointeVers: null, categorie: null,
+      texte: "En recoupant les pages retrouvées du registre avec le passage du messager inconnu, il apparaît que celui-ci venait réclamer une dette contractée par l'enclave avant même sa fondation — sans lien avec la mort de la Doyenne, mais qui explique enfin sa présence la veille du drame." },
 
     // Mobiles fixes
     { id: "registre-medicaments", lieu: "infirmerie", pointeVers: "suspect:medecin-enclave", categorie: "mobile",
@@ -111,6 +127,10 @@ export const scenario = {
       texte: "Rien chez {{nomCible}} ne trahit un contact récent avec une arme quelconque." },
     { id: "temoin-reserve", lieu: "reserve-eau", pointeVers: "innocent", categorie: "opportunite",
       texte: "Un autre survivant confirme avoir croisé {{nomCible}} à la réserve d'eau, loin de la salle du conseil." },
+  ],
+
+  combinaisons: [
+    { a: "registre-dechire", b: "messager-exterieur", resultat: "dette-anterieure-fondation" },
   ],
 
   interrogatoires: {

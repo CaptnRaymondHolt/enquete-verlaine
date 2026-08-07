@@ -76,7 +76,21 @@ export const scenario = {
     { id: "reservation-mystere", lieu: "terrasse", pointeVers: null, categorie: null,
       texte: "Une réservation a été faite au nom d'un client inconnu, jamais arrivé ce soir-là." },
     { id: "carnet-notes", lieu: "bureau-chef", pointeVers: null, categorie: null,
-      texte: "Un carnet de notes de Vasseur a plusieurs pages arrachées récemment, sans qu'on sache lesquelles ni pourquoi." },
+      requiert: { indices: ["cameras-coupees"] },
+      texte: "Un carnet de notes de Vasseur a plusieurs pages arrachées récemment, sans qu'on sache lesquelles ni pourquoi.",
+      puzzle: {
+        enonce: "Le tiroir du bureau où se trouve le carnet est fermé par un petit cadenas à combinaison à 4 chiffres.",
+        solution: "0012",
+        aides: [
+          "Un détail déjà noté ailleurs mentionne une durée précise, en minutes.",
+          "Les caméras de la cuisine ont été coupées pendant un nombre précis de minutes — relisez cet indice-là.",
+          "Le code est 0012 — le nombre de minutes pendant lesquelles les caméras sont restées coupées.",
+        ],
+      } },
+
+    // --- Indice révélé par combinaison de deux pièces déjà trouvées ---
+    { id: "pages-arrachees-reconstituees", lieu: null, pointeVers: null, categorie: null,
+      texte: "En recoupant les pages arrachées du carnet de Vasseur avec les messages internes sur le service « invivable », une ébauche se dessine : un plan de réorganisation complète du restaurant, qu'il n'avait annoncé à personne." },
 
     // Mobiles fixes
     { id: "rapport-erreur", lieu: "bureau-chef", pointeVers: "suspect:sous-chef", categorie: "mobile",
@@ -111,6 +125,10 @@ export const scenario = {
       texte: "Rien dans le poste de travail de {{nomCible}} ne trahit un contact récent avec le couteau disparu." },
     { id: "temoin-terrasse", lieu: "terrasse", pointeVers: "innocent", categorie: "opportunite",
       texte: "Un collègue confirme avoir partagé une pause avec {{nomCible}} sur la terrasse tout le long de la plage horaire critique." },
+  ],
+
+  combinaisons: [
+    { a: "carnet-notes", b: "tensions-service", resultat: "pages-arrachees-reconstituees" },
   ],
 
   interrogatoires: {
