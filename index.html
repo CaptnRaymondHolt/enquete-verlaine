@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#8b2c2c" />
 <meta name="description" content="Un dossier d'enquête à résoudre — huis clos rejouable, le coupable change à chaque partie." />
-<title>Minuit au Manoir Verlaine — Enquête</title>
+<title>Dossiers d'enquête — Jeu rejouable</title>
 <style>
   :root{
     --paper:#f3ede0; --paper-2:#eae2d0; --line:#d9cfb8;
@@ -141,14 +141,12 @@
 
   <!-- ============ MENU ============ -->
   <section class="ecran actif" data-ecran="menu">
-    <span class="eyebrow">Dossier confidentiel</span>
-    <h1>Minuit au Manoir Verlaine</h1>
-    <p class="muted">Un huis clos rejouable — le coupable change à chaque nouvelle enquête. À vous de reconstituer, preuve après preuve, ce qui s'est vraiment passé.</p>
-    <div class="row" style="margin-top:20px;">
-      <button class="btn btn-accent" id="btn-nouvelle">Nouvelle enquête</button>
-      <button class="btn" id="btn-reprendre" style="display:none;">Reprendre l'enquête en cours</button>
-    </div>
-    <footer class="credits">Dossier n°1 — Minuit au Manoir Verlaine · enquete.vibecoderau.top</footer>
+    <span class="eyebrow">Dossiers confidentiels</span>
+    <h1>Enquêtes à résoudre</h1>
+    <p class="muted">Des huis clos rejouables — le coupable change à chaque nouvelle enquête. Choisissez un dossier.</p>
+    <button class="btn" id="btn-reprendre" style="display:none; margin-bottom:16px;">Reprendre l'enquête en cours</button>
+    <div class="liste-nav" id="menu-scenarios"></div>
+    <footer class="credits">enquete.vibecoderau.top</footer>
   </section>
 
   <!-- ============ BRIEFING ============ -->
@@ -272,7 +270,7 @@ async function init(){
       q("#btn-reprendre").style.display = "inline-flex";
     }
   }
-  q("#btn-nouvelle").addEventListener("click", nouvellePartie);
+  renderMenu();
   q("#btn-reprendre").addEventListener("click", () => { montrerEcran(etat.ecran); });
   q("#btn-commencer").addEventListener("click", () => { allerA(etat, "hub"); render(); });
   q("#btn-carnet").addEventListener("click", () => { allerA(etat, "carnet"); render(); });
@@ -281,12 +279,30 @@ async function init(){
   q("#btn-accusation-retour").addEventListener("click", () => { allerA(etat, "hub"); render(); });
   q("#btn-lieu-retour").addEventListener("click", () => { allerA(etat, "hub"); render(); });
   q("#btn-suspect-retour").addEventListener("click", () => { allerA(etat, "hub"); render(); });
-  q("#btn-rejouer").addEventListener("click", nouvellePartie);
+  q("#btn-rejouer").addEventListener("click", retourMenu);
 }
 
-async function nouvellePartie(){
+function renderMenu(){
+  const cont = q("#menu-scenarios"); cont.innerHTML = "";
+  SCENARIOS.forEach((def) => {
+    const btn = el("button", "item-nav", `
+      <span><span class="titre">${def.titre}</span><br><span class="sub">${def.accroche}</span></span>
+    `);
+    btn.addEventListener("click", () => nouvellePartie(def));
+    cont.appendChild(btn);
+  });
+}
+
+function retourMenu(){
   effacerSave();
-  const def = SCENARIOS[0]; // un seul scénario pour l'instant, sélection à ajouter si plusieurs
+  scenario = null;
+  etat = null;
+  q("#btn-reprendre").style.display = "none";
+  montrerEcran("menu");
+}
+
+async function nouvellePartie(def){
+  effacerSave();
   scenario = await def.charger();
   const partie = genererPartie(scenario);
   etat = creerEtatInitial(partie);
