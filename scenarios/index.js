@@ -37,4 +37,10 @@ export const SCENARIOS = [
     accroche: "Un Grand Maître de guilde assassiné après avoir annoncé une découverte magique majeure — heroic fantasy.",
     charger: () => import("./arcanes.js").then((m) => m.scenario),
   },
+  {
+    id: "fort-cendres",
+    titre: "L'Héritage de Fort-Cendres",
+    accroche: "Une enclave de survivants, une fondatrice assassinée après l'annonce d'une découverte vitale — post-apocalyptique.",
+    charger: () => import("./fort-cendres.js").then((m) => m.scenario),
+  },
 ];
