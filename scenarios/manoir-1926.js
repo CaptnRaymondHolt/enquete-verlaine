@@ -121,9 +121,27 @@ export const scenario = {
     { id: "temoignage-terrasse", lieu: "jardin_hiver", pointeVers: "innocent", categorie: "opportunite",
       texte: "Un jardinier de nuit atteste avoir croisé {{nomCible}} loin du jardin d'hiver, à l'opposé du manoir, au moment critique." },
 
-    // --- Indice de progression / révélation lors d'une confrontation réussie ---
+    // --- Indice verrouillé derrière un puzzle à code (façon Unlock!) ---
     { id: "carnet-huissier", lieu: "cave", pointeVers: null, categorie: null,
-      texte: "Un carnet d'huissier, caché derrière les bouteilles les plus anciennes, semble avoir été consulté récemment par quelqu'un de la maison." },
+      requiert: { indices: ["horloge-arretee"] },
+      texte: "Un carnet d'huissier, caché derrière les bouteilles les plus anciennes, semble avoir été consulté récemment par quelqu'un de la maison.",
+      puzzle: {
+        enonce: "Un petit coffret métallique, glissé derrière les bouteilles, porte un cadenas à 4 chiffres.",
+        solution: "0007",
+        aides: [
+          "Un détail déjà noté ailleurs mentionne une heure précise, à quatre chiffres.",
+          "L'horloge du bureau, arrêtée dans la chute du corps : relisez cet indice-là.",
+          "Le code est 0007 — l'heure exacte affichée par l'horloge arrêtée du bureau.",
+        ],
+      } },
+
+    // --- Indice révélé par combinaison de deux pièces déjà trouvées ---
+    { id: "rendezvous-huissier-secret", lieu: null, pointeVers: null, categorie: null,
+      texte: "En recoupant le journal intime d'Édouard avec les pages du carnet d'huissier, une date apparaît : il avait pris rendez-vous en secret la semaine passée pour faire authentifier un nouveau document en urgence." },
+  ],
+
+  combinaisons: [
+    { a: "journal-intime", b: "carnet-huissier", resultat: "rendezvous-huissier-secret" },
   ],
 
   interrogatoires: {

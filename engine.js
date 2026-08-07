@@ -7,6 +7,14 @@
 const SAVE_KEY = "enquete_save_v1";
 export const JOURS_OUVRES_REF = 218; // non utilise ici, garde pour reference future
 
+export const DUREE_LIMITE_MIN_DEFAUT = 60;
+const PENALITE_ECHEC_PUZZLE_MS = 2 * 60 * 1000;
+const PENALITE_AIDE_MS = [0, 60 * 1000, 3 * 60 * 1000]; // coût des aides 1/2/3 (la 1ère est gratuite)
+
+function normaliserSaisie(s) {
+  return String(s ?? "").trim().toLowerCase().replace(/\s+/g, "");
+}
+
 // ---------------------------------------------------------------------------
 // Tirage structuré : résout le scénario abstrait en une partie concrète.
 // Le coupable est tiré au hasard parmi les suspects ; les indices "innocent"
@@ -67,6 +75,11 @@ export function creerEtatInitial(partieResolue) {
     questionsPosees: [],
     confrontationsReussies: [],
     dossierPreuves: [],
+
+    penaliteMs: 0,
+    tentativesEchoueesPuzzles: {},
+    aidesVues: {},
+    combinaisonsReussies: [],
 
     accusation: null, // rempli une fois la partie résolue
   };
@@ -163,6 +176,81 @@ export function confronter(scenario, etat, suspectId, questionId, indiceId) {
   return { reussite, reactionSpeciale: reussite ? question.reactionConfrontation : null };
 }
 
+// ---------------------------------------------------------------------------
+// Puzzles à code — inspirés d'Unlock! : un indice peut être verrouillé
+// derrière un code à saisir plutôt qu'un simple clic. Une mauvaise saisie ne
+// bloque jamais la partie, elle coûte simplement du temps. Un système d'aide
+// à 3 paliers évite de rester bloqué sans maître du jeu (la 1ère est
+// gratuite, les suivantes coûtent davantage de temps).
+// ---------------------------------------------------------------------------
+export function tenterPuzzle(scenario, etat, indiceId, reponse) {
+  const ind = scenario.indices.find((i) => i.id === indiceId);
+  if (!ind?.puzzle) return false;
+  const reussite = normaliserSaisie(reponse) === normaliserSaisie(ind.puzzle.solution);
+  if (reussite) {
+    trouverIndice(etat, indiceId);
+  } else {
+    etat.tentativesEchoueesPuzzles[indiceId] = (etat.tentativesEchoueesPuzzles[indiceId] || 0) + 1;
+    etat.penaliteMs += PENALITE_ECHEC_PUZZLE_MS;
+    sauvegarder(etat);
+  }
+  return reussite;
+}
+
+export function demanderAide(etat, indiceId) {
+  const niveau = etat.aidesVues[indiceId] || 0;
+  if (niveau >= 3) return niveau;
+  const nouveauNiveau = niveau + 1;
+  etat.aidesVues[indiceId] = nouveauNiveau;
+  etat.penaliteMs += PENALITE_AIDE_MS[nouveauNiveau - 1];
+  sauvegarder(etat);
+  return nouveauNiveau;
+}
+
+// ---------------------------------------------------------------------------
+// Combinaison d'indices — façon Unlock! (deux objets rapprochés révèlent
+// autre chose). Purement additif : un scénario sans `combinaisons` n'est
+// pas affecté. Jamais de pénalité sur un mauvais essai de combinaison, pour
+// encourager à essayer librement.
+// ---------------------------------------------------------------------------
+export function combinaisonsPossibles(scenario, etat) {
+  return (scenario.combinaisons || []).filter((c) => {
+    const clef = [c.a, c.b].sort().join("+");
+    return (
+      etat.indicesTrouves.includes(c.a) &&
+      etat.indicesTrouves.includes(c.b) &&
+      !etat.combinaisonsReussies.includes(clef)
+    );
+  });
+}
+
+export function combiner(scenario, etat, idA, idB) {
+  const combo = (scenario.combinaisons || []).find(
+    (c) => (c.a === idA && c.b === idB) || (c.a === idB && c.b === idA)
+  );
+  if (!combo) return { reussite: false };
+  if (!etat.indicesTrouves.includes(combo.a) || !etat.indicesTrouves.includes(combo.b)) return { reussite: false };
+  const clef = [combo.a, combo.b].sort().join("+");
+  if (!etat.combinaisonsReussies.includes(clef)) etat.combinaisonsReussies.push(clef);
+  if (combo.resultat) trouverIndice(etat, combo.resultat);
+  sauvegarder(etat);
+  return { reussite: true, resultat: combo.resultat };
+}
+
+// ---------------------------------------------------------------------------
+// Minuteur de session — jamais bloquant : dépasser le temps imparti pèse
+// simplement sur la note finale (cf. faireAccusation), aucune fin de partie
+// forcée. Les pénalités de puzzle/aide s'ajoutent au temps écoulé affiché.
+// ---------------------------------------------------------------------------
+export function tempsEcouleMs(etat) {
+  return Date.now() - etat.demarreLe + (etat.penaliteMs || 0);
+}
+
+export function tempsRestantMs(scenario, etat) {
+  const limiteMs = (scenario.dureeLimiteMin || DUREE_LIMITE_MIN_DEFAUT) * 60000;
+  return limiteMs - tempsEcouleMs(etat);
+}
+
 export function ajouterAuDossier(etat, indiceId) {
   if (!etat.dossierPreuves.includes(indiceId)) etat.dossierPreuves.push(indiceId);
   sauvegarder(etat);
@@ -197,10 +285,15 @@ export function faireAccusation(scenario, etat, suspectAccuseId) {
   const correcte = suspectAccuseId === etat.coupableId;
 
   const pctIndices = etat.indicesResolus.length > 0 ? etat.indicesTrouves.length / etat.indicesResolus.length : 0;
-  const pointsIndices = pctIndices * 40;
-  const pointsAccusation = correcte ? 40 : 0;
+  const limiteMs = (scenario.dureeLimiteMin || DUREE_LIMITE_MIN_DEFAUT) * 60000;
+  const depassementRatio = Math.max(0, (tempsEcouleMs(etat) - limiteMs) / limiteMs);
+  const pctTemps = Math.max(0, 1 - depassementRatio);
+
+  const pointsIndices = pctIndices * 30;
+  const pointsAccusation = correcte ? 35 : 0;
   const pointsCorroboration = (Math.min(categoriesCouvertes.size, 3) / 3) * 20;
-  const score = Math.round(pointsIndices + pointsAccusation + pointsCorroboration);
+  const pointsTemps = pctTemps * 15;
+  const score = Math.round(pointsIndices + pointsAccusation + pointsCorroboration + pointsTemps);
 
   let qualificatif;
   if (correcte && solide && pctIndices >= 0.6) qualificatif = "AFFAIRE CLASSÉE";
@@ -213,6 +306,7 @@ export function faireAccusation(scenario, etat, suspectAccuseId) {
     categoriesCouvertes: [...categoriesCouvertes],
     dossierSolide: solide,
     pctIndicesTrouves: pctIndices,
+    dansLesTemps: depassementRatio === 0,
     score,
     qualificatif,
   };

@@ -109,6 +109,33 @@
   }
   .piece-action{ margin-top:10px; }
 
+  .minuteur{
+    font-family:var(--mono); font-size:.78rem; letter-spacing:.03em; color:var(--muted);
+    display:inline-flex; align-items:center; gap:6px; margin-bottom:16px;
+  }
+  .minuteur.depasse{ color:var(--accent); font-weight:700; }
+
+  .puzzle{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px; margin-bottom:10px;
+    clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+  }
+  .puzzle-enonce{ margin-bottom:12px; }
+  .puzzle-saisie{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+  .puzzle-saisie input{
+    font-family:var(--mono); font-size:1rem; letter-spacing:.08em; padding:10px 12px;
+    border:1.5px solid var(--ink); border-radius:var(--radius); background:transparent; color:var(--ink);
+    min-height:44px; flex:1; min-width:120px;
+  }
+  .puzzle-erreur{ color:var(--accent); font-size:.85rem; margin:0 0 8px; }
+  .puzzle-aide{ font-size:.85rem; color:var(--muted); margin:8px 0 0; padding-top:8px; border-top:1px dashed var(--line); }
+
+  .combi-piece{ display:flex; align-items:flex-start; gap:10px; }
+  .combi-piece input{ width:20px; height:20px; margin-top:2px; flex:none; }
+  .combi-resultat{ font-size:.85rem; margin-top:10px; }
+  .combi-resultat.ok{ color:var(--ok); }
+  .combi-resultat.echec{ color:var(--muted-2); }
+
   .liste-nav{ display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
   .item-nav{
     display:flex; justify-content:space-between; align-items:center; gap:10px;
@@ -167,6 +194,7 @@
   <section class="ecran" data-ecran="hub">
     <span class="eyebrow">Enquête en cours</span>
     <h2 id="hub-titre"></h2>
+    <div class="minuteur" id="hub-minuteur"></div>
     <div class="section-title">Lieux à explorer</div>
     <div class="liste-nav" id="hub-lieux"></div>
     <div class="section-title">Personnes à interroger</div>
@@ -232,6 +260,7 @@
     <div class="fiche">
       <p id="resolution-detail-indices"></p>
       <p id="resolution-detail-categories"></p>
+      <p id="resolution-detail-temps"></p>
     </div>
     <button class="btn btn-accent" id="btn-rejouer">Rejouer — nouvelle enquête</button>
   </section>
@@ -244,6 +273,7 @@ import {
   indicesDuLieu, indicesTrouvesDetails, questionsDebloqueesPour,
   visiterLieu, trouverIndice, ouvrirInterrogatoire, poserQuestion, confronter, clefConfrontation,
   ajouterAuDossier, retirerDuDossier, allerA, evaluerDossier, faireAccusation,
+  tenterPuzzle, demanderAide, combinaisonsPossibles, combiner, tempsRestantMs,
   sauvegarder, chargerSave, effacerSave,
 } from "./engine.js";
 import { SCENARIOS } from "./scenarios/index.js";
@@ -338,8 +368,28 @@ function renderBriefing(){
   q("#briefing-heure").textContent = scenario.faitsFixes.heureMort;
 }
 
+function formatMinutesSecondes(ms){
+  const s = Math.round(Math.abs(ms) / 1000);
+  const mm = Math.floor(s / 60);
+  const ss = s % 60;
+  return `${mm}:${String(ss).padStart(2, "0")}`;
+}
+
+function majMinuteur(){
+  if (!etat || !scenario || etat.ecran === "menu" || etat.ecran === "resolution") return;
+  const cible = q("#hub-minuteur");
+  if (!cible) return;
+  const restantMs = tempsRestantMs(scenario, etat);
+  cible.classList.toggle("depasse", restantMs < 0);
+  cible.textContent = restantMs >= 0
+    ? `⏱ Temps restant : ${formatMinutesSecondes(restantMs)}`
+    : `⏱ Dépassé de ${formatMinutesSecondes(restantMs)} — l'enquête continue, mais ça pèsera sur le verdict.`;
+}
+setInterval(majMinuteur, 1000);
+
 function renderHub(){
   q("#hub-titre").textContent = scenario.titre;
+  majMinuteur();
 
   const lieuxEl = q("#hub-lieux"); lieuxEl.innerHTML = "";
   scenario.lieux.forEach((lieu) => {
@@ -377,15 +427,52 @@ function renderLieu(){
     if (trouve) {
       cont.appendChild(fichePreuve(ind));
     } else if (estDebloque(ind.requiert, etat)) {
-      const carte = el("div", "piece-verrou", `Un détail attire l'attention ici — reste à l'examiner de plus près.`);
-      const btn = el("button", "btn piece-action", "Examiner");
-      btn.addEventListener("click", () => { trouverIndice(etat, ind.id); render(); });
-      carte.appendChild(btn);
-      cont.appendChild(carte);
+      if (ind.puzzle) {
+        cont.appendChild(fichePuzzle(ind));
+      } else {
+        const carte = el("div", "piece-verrou", `Un détail attire l'attention ici — reste à l'examiner de plus près.`);
+        const btn = el("button", "btn piece-action", "Examiner");
+        btn.addEventListener("click", () => { trouverIndice(etat, ind.id); render(); });
+        carte.appendChild(btn);
+        cont.appendChild(carte);
+      }
     } else {
       cont.appendChild(el("div", "piece-verrou", "??? — un détail ici ne prendra sens qu'avec d'autres informations en main."));
     }
   });
+}
+
+function fichePuzzle(ind){
+  const niveauAide = etat.aidesVues[ind.id] || 0;
+  const tentatives = etat.tentativesEchoueesPuzzles[ind.id] || 0;
+  const div = el("div", "puzzle", `
+    <p class="puzzle-enonce">${ind.puzzle.enonce}</p>
+    <div class="puzzle-saisie">
+      <input type="text" id="puzzle-saisie-${ind.id}" placeholder="Code" />
+      <button class="btn btn-accent" id="puzzle-valider-${ind.id}">Ouvrir</button>
+    </div>
+    ${tentatives > 0 ? `<p class="puzzle-erreur">Combinaison incorrecte (${tentatives} essai${tentatives > 1 ? "s" : ""}).</p>` : ""}
+  `);
+
+  const aideZone = el("div", "puzzle-aide");
+  if (niveauAide > 0) {
+    for (let i = 0; i < niveauAide; i++) aideZone.appendChild(el("p", "", ind.puzzle.aides[i]));
+  }
+  if (niveauAide < 3) {
+    const coutTexte = niveauAide === 0 ? "gratuit" : niveauAide === 1 ? "coûte 1 min" : "coûte 3 min — donne la solution";
+    const btnAide = el("button", "btn", `Demander un indice (${coutTexte})`);
+    btnAide.addEventListener("click", () => { demanderAide(etat, ind.id); render(); });
+    aideZone.appendChild(btnAide);
+  }
+  div.appendChild(aideZone);
+
+  div.querySelector(`#puzzle-valider-${ind.id}`).addEventListener("click", () => {
+    const saisie = div.querySelector(`#puzzle-saisie-${ind.id}`).value;
+    tenterPuzzle(scenario, etat, ind.id, saisie);
+    render();
+  });
+
+  return div;
 }
 
 function fichePreuve(ind){
@@ -445,9 +532,51 @@ function renderCarnet(){
   const details = indicesTrouvesDetails(etat);
   if (details.length === 0) {
     cont.appendChild(el("p", "muted", "Aucun indice trouvé pour l'instant. Explorez les lieux du manoir."));
-    return;
+  } else {
+    details.forEach((ind) => cont.appendChild(fichePreuve(ind)));
   }
-  details.forEach((ind) => cont.appendChild(fichePreuve(ind)));
+
+  if ((scenario.combinaisons || []).length > 0) {
+    cont.appendChild(renderCombinaisons(details));
+  }
+}
+
+function renderCombinaisons(details){
+  const bloc = el("div", "", `<div class="section-title">Rapprocher deux pièces</div>
+    <p class="muted">Sélectionnez deux indices trouvés qui pourraient aller ensemble.</p>`);
+  const liste = el("div");
+  const selection = new Set();
+
+  details.forEach((ind) => {
+    const label = el("label", "combi-piece fiche");
+    label.innerHTML = `<input type="checkbox" /> <span>${ind.texte}</span>`;
+    const input = label.querySelector("input");
+    input.addEventListener("change", () => {
+      if (input.checked) selection.add(ind.id); else selection.delete(ind.id);
+      btnCombiner.disabled = selection.size !== 2;
+    });
+    liste.appendChild(label);
+  });
+  bloc.appendChild(liste);
+
+  const btnCombiner = el("button", "btn btn-accent", "Combiner");
+  btnCombiner.disabled = true;
+  const resultatEl = el("p", "combi-resultat");
+  btnCombiner.addEventListener("click", () => {
+    const [idA, idB] = [...selection];
+    const { reussite } = combiner(scenario, etat, idA, idB);
+    if (reussite) {
+      resultatEl.className = "combi-resultat ok";
+      resultatEl.textContent = "Ces deux éléments se recoupent — une nouvelle pièce a été ajoutée au dossier.";
+      setTimeout(render, 900);
+    } else {
+      resultatEl.className = "combi-resultat echec";
+      resultatEl.textContent = "Ces deux éléments ne semblent pas aller ensemble.";
+    }
+  });
+  bloc.appendChild(btnCombiner);
+  bloc.appendChild(resultatEl);
+  return bloc;
 }
 
 function renderAccusation(){
@@ -500,6 +629,9 @@ function renderResolution(){
   q("#resolution-detail-categories").textContent = acc.categoriesCouvertes.length
     ? `Dossier à l'appui de l'accusation : ${acc.categoriesCouvertes.map((c) => CAT_LABEL[c]).join(", ")}${acc.dossierSolide ? " — dossier solide sur les trois plans." : "."}`
     : "Aucune preuve n'a été jointe à l'accusation.";
+  q("#resolution-detail-temps").textContent = acc.dansLesTemps
+    ? "Enquête bouclée dans les temps."
+    : "Le temps imparti a été dépassé — cela a légèrement pesé sur le score.";
 }
 
 init();
