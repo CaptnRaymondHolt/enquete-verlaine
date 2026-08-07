@@ -13,4 +13,28 @@ export const SCENARIOS = [
     accroche: "Une station de recherche isolée, un commandant retrouvé mort, cinq membres d'équipage — et une découverte qui change tout.",
     charger: () => import("./promethee-7.js").then((m) => m.scenario),
   },
+  {
+    id: "neo-kaito",
+    titre: "Interférence à Néo-Kaïto",
+    accroche: "Une mégacorporation, un directeur technique assassiné le soir du lancement d'un implant neuronal révolutionnaire — cyberpunk.",
+    charger: () => import("./neo-kaito.js").then((m) => m.scenario),
+  },
+  {
+    id: "brandael",
+    titre: "Le Poison du Château de Brandael",
+    accroche: "Un baron empoisonné au dernier toast d'un festin médiéval — cour, intrigues et alchimie interdite.",
+    charger: () => import("./brandael.js").then((m) => m.scenario),
+  },
+  {
+    id: "derniere-commande",
+    titre: "Dernière Commande",
+    accroche: "Un chef étoilé retrouvé mort en cuisine, le soir de l'appel du guide Michelin — contemporain.",
+    charger: () => import("./derniere-commande.js").then((m) => m.scenario),
+  },
+  {
+    id: "arcanes",
+    titre: "Le Tournoi des Arcanes",
+    accroche: "Un Grand Maître de guilde assassiné après avoir annoncé une découverte magique majeure — heroic fantasy.",
+    charger: () => import("./arcanes.js").then((m) => m.scenario),
+  },
 ];
