@@ -43,4 +43,10 @@ export const SCENARIOS = [
     accroche: "Une enclave de survivants, une fondatrice assassinée après l'annonce d'une découverte vitale — post-apocalyptique.",
     charger: () => import("./fort-cendres.js").then((m) => m.scenario),
   },
+  {
+    id: "ravenmoor",
+    titre: "Minuit à l'Asile de Ravenmoor",
+    accroche: "Une animatrice de télévision paranormale assassinée en plein tournage en direct dans un asile abandonné — horreur.",
+    charger: () => import("./ravenmoor.js").then((m) => m.scenario),
+  },
 ];
